@@ -24,6 +24,24 @@ jobs:
           push: true
           tags: sartajashraf/basic-1.0-docker-node-deploy-backend:latest
 
+      # - name: SSH and Deploy to the server
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.SSH_HOST_IP }}
+      #     username: ${{ secrets.SSH_HOST_USER }}
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     script: |
+      #       docker pull sartajashraf/basic-1.0-docker-node-deploy-backend:latest
+      #       docker stop basic-1.0-docker-node-deploy-backend || true
+      #       docker rm basic-1.0-docker-node-deploy-backend || true
+      #       docker run -d --name basic-1.0-docker-node-deploy-backend -p 5030:5030 sartajashraf/basic-1.0-docker-node-deploy-backend:latest
       - name: SSH and Deploy to the server
-        run:  |
-          echo "next step to run "
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/auth_private_key
+          chmod 600 ~/.ssh/auth_private_key
+          ssh -i ~/.ssh/auth_private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} && \
+            "docker pull sartajashraf/basic-1.0-docker-node-deploy-backend:latest && \
+             docker stop basic-1.0-docker-node-deploy-backend || true && \
+             docker rm basic-1.0-docker-node-deploy-backend || true && \
+             docker run -d --name basic-1.0-docker-node-deploy-backend -p 5030:5030 sartajashraf/basic-1.0-docker-node-deploy-backend:latest"
+            
