@@ -1,3 +1,25 @@
+# This workflow is triggered when code is pushed to the main branch
+# It performs the following steps:
+# 1. Checks out the code.
+    # -> uses: actions/checkout@v2
+
+# 2. Logs into Docker Hub.
+    # -> uses: docker/login-action@v2
+      #  with: username and password
+    
+# 3. Builds a Docker image.
+    # -> uses: docker/build-push-action@v2
+
+# 4. Pushes the image to Docker Hub.
+    # -> uses: docker/build-push-action@v2
+
+# 5. Deploys the image to a VM by:
+#    a. SSHing into the machine.
+#    b. Pulling the latest image.
+#    c. Stopping the existing container.
+#    d. Running the new container.
+
+
 name: Deploy backend to the server
 
 on: 
@@ -22,7 +44,9 @@ jobs:
           context: backend
           file: ./docker/Dockerfile.backend
           push: true
-          tags: sartajashraf/basic-1.0-docker-node-deploy-backend:latest
+          tags: | 
+            sartajashraf/basic-1.0-docker-node-deploy-backend:latest
+            sartajashraf/basic-1.0-docker-node-deploy-backend:${{ github.sha }}
 
       # - name: SSH and Deploy to the server
       #   uses: appleboy/ssh-action@v1.0.3
@@ -37,6 +61,7 @@ jobs:
       #       docker run -d --name basic-1.0-docker-node-deploy-backend -p 5030:5030 sartajashraf/basic-1.0-docker-node-deploy-backend:latest
       - name: SSH into server and deploy
         run: |
+          
           mkdir -p ~/.ssh
           echo "${{secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/auth_private_key
           chmod 600 ~/.ssh/auth_private_key
@@ -45,7 +70,8 @@ jobs:
           ssh -i ~/.ssh/auth_private_key \
             -o StrictHostKeyChecking=no \
             ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} << 'EOF'
-           
+            
+            set -e
             IMAGE="sartajashraf/basic-1.0-docker-node-deploy-backend:latest"
             CONTAINER="basic-1.0-docker-node-deploy-backend"
 
@@ -58,14 +84,14 @@ jobs:
               docker rm "$CONTAINER"
             fi
 
-          echo "Starting new container..."
-          docker run -d \
-            --name "$CONTAINER" \
-            --restart unless-stopped \
-            -p 5030:5030 \
-            "$IMAGE"
-            
-            echo "Deployment completed successfully."
+            echo "Starting new container..."
+            docker run -d \
+              --name "$CONTAINER" \
+              --restart unless-stopped \
+              -p 5030:5030 \
+              "$IMAGE"
+
+              echo "Deployment completed successfully."
           EOF
             
           
