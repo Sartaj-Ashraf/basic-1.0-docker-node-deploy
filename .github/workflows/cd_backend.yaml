@@ -22,8 +22,10 @@ jobs:
           context: ./backend
           file: ./docker/Dockerfile.backend
           push: true
-          # tags: sartajashraf/basic-1.0-docker-node-deploy-backend:latest
-          tags: sartajashraf/basic-1.0-docker-node-deploy-backend:${{ github.sha }}
+          tags: |
+            sartajashraf/basic-1.0-docker-node-deploy-backend:latest
+            sartajashraf/basic-1.0-docker-node-deploy-backend:${{github.sha}}
+
       - name: SSH and Deploy to the server
         run:  |
           echo "next step to run "
