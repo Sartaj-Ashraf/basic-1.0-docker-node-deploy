@@ -17,5 +17,15 @@ jobs:
           username: ${{secrets.DOCKER_USERNAME}}
           password: ${{secrets.DOCKER_PASSWORD}}
       - name: Build and push to docker hub
-        run: |
-          echo "To be build using ${{secrets.DOCKER_USERNAME}}"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          file: ./docker/Dockerfile.backend
+          tags: |
+            sartajashraf/basic-1.0-docker-node-deploy-backend:latest
+            sartajashraf/basic-1.0-docker-node-deploy-backend:${{github.sha}}
+
+      - name: SSH and Deploy to the server
+        run:  |
+          echo "next step to run "
