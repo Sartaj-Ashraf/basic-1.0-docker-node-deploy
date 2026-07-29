@@ -35,13 +35,37 @@ jobs:
       #       docker stop basic-1.0-docker-node-deploy-backend || true
       #       docker rm basic-1.0-docker-node-deploy-backend || true
       #       docker run -d --name basic-1.0-docker-node-deploy-backend -p 5030:5030 sartajashraf/basic-1.0-docker-node-deploy-backend:latest
-      - name: SSH and Deploy to the server
+      - name: SSH into server and deploy
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/auth_private_key
+          mkdir -p ~/.ssh
+          echo "${{secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/auth_private_key
           chmod 600 ~/.ssh/auth_private_key
-          ssh -i ~/.ssh/auth_private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} && \
-            "docker pull sartajashraf/basic-1.0-docker-node-deploy-backend:latest && \
-             docker stop basic-1.0-docker-node-deploy-backend || true && \
-             docker rm basic-1.0-docker-node-deploy-backend || true && \
-             docker run -d --name basic-1.0-docker-node-deploy-backend -p 5030:5030 sartajashraf/basic-1.0-docker-node-deploy-backend:latest"
+
+
+          ssh -i ~/.ssh/auth_private_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} << 'EOF'
+           
+            IMAGE="sartajashraf/basic-1.0-docker-node-deploy-backend:latest"
+            CONTAINER="basic-1.0-docker-node-deploy-backend"
+
+            echo "Pull latest image"
+            docker pull "$IMAGE"
+
+            if docker ps -q -f name="$CONTAINER" | grep -q .; then
+              echo "Stopping and removing existing container"
+              docker stop "$CONTAINER"
+              docker rm "$CONTAINER"
+            fi
+
+          echo "Starting new container..."
+          docker run -d \
+            --name "$CONTAINER" \
+            --restart unless-stopped \
+            -p 5030:5030 \
+            "$IMAGE"
             
+            echo "Deployment completed successfully."
+          EOF
+            
+          
